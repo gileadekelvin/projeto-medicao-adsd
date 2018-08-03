@@ -117,41 +117,41 @@ O objetivo nesta seção é determinar o intervalo de confiança para cada métr
 
 ##### Política de alocação
 
-```{r}
+```{r results='show'}
 consolidation <- t.test((medicao_summ %>% filter(placement_policy == "consolidation"))$workload_time)$conf.int
 consolidation
 ```
 
-```{r}
-espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$workload_time)$conf.int
-espalhamento
+```{r results='show'}
+# espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$workload_time)$conf.int
+# espalhamento
 ```
 
 TODO : {Comparar intervalos}
 
-#### Tamanho da VM
+##### Tamanho da VM
 
-```{r}
+```{r results='show'}
 large <- t.test((medicao_summ %>% filter(vm_size == "large"))$workload_time)$conf.int
 large
 ```
-```{r}
-small <- t.test((medicao_summ %>% filter(vm_size == "small"))$workload_time)$conf.int
-small
+```{r results='show'}
+# small <- t.test((medicao_summ %>% filter(vm_size == "small"))$workload_time)$conf.int
+# small
 ```
 
 TODO : {Comparar intervalos}
 
-#### Tamanho do workload
+##### Tamanho do workload
 
-```{r}
+```{r results='show'}
 large <- t.test((medicao_summ %>% filter(workload_size == "large"))$workload_time)$conf.int
 large
 ```
 
-```{r}
-small <- t.test((medicao_summ %>% filter(workload_size == "small"))$workload_time)$conf.int
-small
+```{r results='show'}
+# small <- t.test((medicao_summ %>% filter(workload_size == "small"))$workload_time)$conf.int
+# small
 ```
 
 TODO : {Comparar intervalos}
@@ -160,40 +160,41 @@ TODO : {Comparar intervalos}
 
 ##### Política de alocação
 
-```{r}
+```{r results='show'}
 consolidation <- t.test((medicao_summ %>% filter(placement_policy == "consolidation"))$host_power)$conf.int
 consolidation
 ```
 
-```{r}
-espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$host_power)$conf.int
-espalhamento
+```{r results='show'}
+# espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$host_power)$conf.int
+# espalhamento
 ```
 
 TODO : {Comparar intervalos}
-#### Tamanho da VM
+##### Tamanho da VM
 
-```{r}
+```{r results='show'}
 large <- t.test((medicao_summ %>% filter(vm_size == "large"))$host_power)$conf.int
 large
 ```
-```{r}
-small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_power)$conf.int
-small
+
+```{r results='show'}
+# small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_power)$conf.int
+# small
 ```
 
 TODO : {Comparar intervalos}
 
-#### Tamanho do workload
+##### Tamanho do workload
 
-```{r}
+```{r results='show'}
 large <- t.test((medicao_summ %>% filter(workload_size == "large"))$host_power)$conf.int
 large
 ```
 
-```{r}
-small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_power)$conf.int
-small
+```{r results='show'}
+# small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_power)$conf.int
+# small
 ```
 
 TODO : {Comparar intervalos}
@@ -202,44 +203,44 @@ TODO : {Comparar intervalos}
 
 ##### Política de alocação
 
-```{r}
+```{r results='show'}
 consolidation <- t.test((medicao_summ %>% filter(placement_policy == "consolidation"))$host_temperature)$conf.int
 consolidation
 ```
 
-```{r}
-espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$host_temperature)$conf.int
-espalhamento
+```{r results='show'}
+# espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$host_temperature)$conf.int
+# espalhamento
 ```
 
 TODO : {Comparar intervalos}
-#### Tamanho da VM
+##### Tamanho da VM
 
-```{r}
+```{r results='show'}
 large <- t.test((medicao_summ %>% filter(vm_size == "large"))$host_temperature)$conf.int
 large
 ```
-```{r}
-small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_temperature)$conf.int
-small
+
+```{r results='show'}
+# small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_temperature)$conf.int
+# small
 ```
 
 TODO : {Comparar intervalos}
 
-#### Tamanho do workload
+##### Tamanho do workload
 
-```{r}
+```{r results='show'}
 large <- t.test((medicao_summ %>% filter(workload_size == "large"))$host_temperature)$conf.int
 large
 ```
 
-```{r}
-small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_temperature)$conf.int
-small
+```{r results='show'}
+# small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_temperature)$conf.int
+# small
 ```
 
 TODO : {Comparar intervalos}
-
 
 ## Conclusão
 
