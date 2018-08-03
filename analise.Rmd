@@ -80,10 +80,24 @@ medicao_summ %>%
   geom_boxplot(outlier.shape = "") +
   geom_jitter(alpha = .4) +
   facet_grid(. ~ placement_policy) +
+  scale_y_continuous(breaks = seq(5, 80, 10)) +
   labs(x = "Tamanho do workload", y = "Tempo de execução (s)", color = "Tamanho da VM")
 ```
 
-TODO: {Inserir análise sobre a visualização completa}
+Essa visualização é composta por dois tipos de gráficos. O gráfico de dispersão mostra os pontos que representam no eixo y, o tempo de execução dos workloads considerando cada tratamento. A cor indica o tamanho da VM (large ou small), no eixo x temos o tamanho do workload (large ou small), e em cada faceta podemos visualizar as políticas de alocação (consolidation, small). O boxplot mostra uma visão sumarizada dos dados, exibindo o 1º quartil, a média e o 3º quartil. Ao comparar dois boxplots, podemos adotar o critério de verificar a distância entre as médias (linhas intermediárias da caixa) a fim de observar possíveis diferenças significativas. A altura do boxplot também pode indicar uma maior dispersão ou não dos dados.
+
+Agora que sabemos que tipo de visualização estamos lidando, podemos aprofundar a interpretação.
+
+Pela visualização é possível observar que, com relação ao tempo de execução, a política de alocação **Consolidation** possui valores mais altos do que a política de alocação **spread**. 
+
+Quando a política de alocação é consolidação e tamanho do workload é large, podemos observar uma diferença com relação ao tempo entre o tamanho da VM. Quando a vm tem o tamanho small, o tempo de execução é maior do que quando a vm tem o tamanho large. O que faz sentido, uma vez que uma VM do tamanho large tem maior poder computacional do que uma do tamanho small. 
+
+Quando o tratamento observado é o que indica a política de alocação como sendo consolidação e o tamanho do workload como small, há uma pequena diferença entre o tempo de execução. De forma análoga, observamos quando a política de alocação é spread e o tamanho do workload é large, a diferença entre as médias é pequena. Os pontos (observações) parecem estar bem próximos
+
+Quando paramos para comparar o tamanho do workload, as diferenças do tempo entre large e small se mostram evidentes. O que faz sentido, uma vez que um workload menor tende a rodar em menos tempo.
+
+Por esta visualização é possível comparar então a influência dos três fatores, de forma individual ou conjunta com relação a métrica de Tempo de execução. Lembrando que adotamos o critério da média (linha intermediária do boxplot) para as conclusões parciais supracitadas. A dispersão das observações também foram levadas em consideração. Vale a pena esclarecer que os pontos estão distantes horizontalmente dos outros apenas para facilitar a visualização dos mesmos. A diferença vertical entre os pontos é a que indica alteração no tempo de execução.
+
 
 De forma análoga, podemos visualizar o comportamento dos dados, durante a variação dos fatores, focando na métrica de temperatura dos hosts (mediana da temperatura considerando o intervalo de tempo de execução do workload).
 
@@ -96,7 +110,11 @@ medicao_summ %>%
   labs(x = "Tamanho do workload", y = "Temperatura (Celsius)", color = "Tamanho da VM")
 ```
 
-TODO: {Inserir análise sobre a visualização completa}
+Por esta visualização perecebemos uma diferença com relação a temperatura entre as políticas de alocação. A política de alocação possui maiores registros de temperatura do que a política spread.
+
+Quando a política de alocação é consolidation existe pouca diferença entre a temperatura durante a variação dos fatores de tamanho do workload e tamanho da VM.
+
+Quando a política de alocação é spread e o tamanho do workload é large, percebemos uma pequena diferença entre o tamanho da VM. VMs de tamanho small possuem uma média de temperatura durante a execução do workload maior que as de tamanho large.
 
 Por último, a visualização do comportamento com relação a métrica consumo de energia (mediana do consumo de energia considerando o intevalo de tempo de execução do workload para o determinado tratamento e repetição).
 
@@ -109,7 +127,7 @@ medicao_summ %>%
   labs(x = "Tamanho do workload", y = "Consumo de Energia (W)", color = "Tamanho da VM")
 ```
 
-TODO: {Inserir análise sobre a visualização completa}
+É visível a diferença entre o consumo de energia com relação a política de alocação. Spread consome bem mais energia do que consolidation. Os demais fatores, tamanho da vm e tamanho do workload parecem influenciar bem menos o consumo de energia, apresentando poucas diferenças quando variamos seus níveis. Interessante também notar a presença de alguns outliers (perto do consumo 200 e perto do consumo 137) quando o tratamento foi spread, tamanho do workload small e tamanho da vm large. Para os outros tratamentos e em outras repetições não observamos muitos outliers com relação ao consumo de energia (considerando a diferença dentro do tratamento específico).
 
 ### Intervalo de confiança
 
@@ -129,7 +147,7 @@ espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "spread"))$w
 espalhamento
 ```
 
-TODO : {Comparar intervalos}
+Com o nível de confiança de 95%, determinamos o intervalo de confiança para o valor do tempo de execução para cada nível do fator **política de alocação**. E como apontado pelos valores acima, a política spread apresenta um intervalo de confiança posicionado abaixo do intervalo da política consolitation. Como os intervalos não possuem intersecção, podemos afirmar com 95% de confiança que **a variação do fator política de alocação altera o tempo de execução dos workloads** submetidos no experimento.
 
 ##### Tamanho da VM
 
@@ -142,7 +160,7 @@ small <- t.test((medicao_summ %>% filter(vm_size == "small"))$workload_time)$con
 small
 ```
 
-TODO : {Comparar intervalos}
+Quando variamos o tamanho da VM, perecebemos que os intervalos para cada nível do fator (small ou large) são bem parecidos. O que nos leva a afirmar, com 95% de confiança, que isoladamente o fator tamanho da VM não influencia no tempo de execução dos workloads.
 
 ##### Tamanho do workload
 
@@ -155,10 +173,9 @@ large
 small <- t.test((medicao_summ %>% filter(workload_size == "small"))$workload_time)$conf.int
 small
 ```
+Como mostrado a seguir, os intervalos de confiança, com 95% de confiança quando variamos os níveis para o fator tamanho do workload apontam que os workloads com tamanho small possuem um menor tempo de execução que os workloads de tamanho large.
 
-TODO : {Comparar intervalos}
-
-#### Temperatura dos hosts
+#### Consumo de energia
 
 ##### Política de alocação
 
@@ -171,8 +188,8 @@ consolidation
 espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "spread"))$host_power)$conf.int
 espalhamento
 ```
+Com relação ao consumo de energia, é possível afirmar que, com 95% de confiança, o intervalo de confiança que contém o valor do consumo de energia quando a política de alocação é spread é superior ao da política de alocação consolidation.
 
-TODO : {Comparar intervalos}
 ##### Tamanho da VM
 
 ```{r results='show'}
@@ -185,7 +202,7 @@ small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_power)$conf.i
 small
 ```
 
-TODO : {Comparar intervalos}
+Com relação a variação dos níveis para o fator tamanho da vm, os intervalos de confiança foram bastante parecidos. O que indica que isoladamente este fator não influencia no consumo de energia.
 
 ##### Tamanho do workload
 
@@ -199,9 +216,9 @@ small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_power)$
 small
 ```
 
-TODO : {Comparar intervalos}
+Os intervalos de confiança são parecidos, o que leva a afirmar, com 95% de confiança, que a variação do fator tamanho do workload isoladamente não causou diferença no consumo de energia.
 
-#### Consumo de energia
+#### Temperatura nos Hosts
 
 ##### Política de alocação
 
@@ -215,7 +232,8 @@ espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "spread"))$h
 espalhamento
 ```
 
-TODO : {Comparar intervalos}
+Os valores dos intervalos de confiança para cada nível do fator política de alocação indicam que, com 95% de confiança, a temperatura dos hosts para consolidação é maior que a temperatura quando a política é spread.
+
 ##### Tamanho da VM
 
 ```{r results='show'}
@@ -228,7 +246,7 @@ small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_temperature)$
 small
 ```
 
-TODO : {Comparar intervalos}
+O intervalo de confiança, gerado com nível de confiança de 95%, indica que a variação fator tamanho da vm, isoladamente, pouco influencia na temperatura dos hosts.
 
 ##### Tamanho do workload
 
@@ -242,13 +260,17 @@ small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_tempera
 small
 ```
 
-TODO : {Comparar intervalos}
+O intervalo de confiança, gerado com nível de confiança de 95%, indica que a variação do tamanho do workload, isoladamente, pouco influencia na temperatura dos hosts.
 
 ## Conclusão
 
-TODO: {conclusão sobre a influência dos fatores nas métricas observadas. De que forma essa análise pode ajudar a tomar um decisão sobre o uso de máquinas adotando consolidação ou espalhamento}
+Quando analisamos de forma isolada cada fator percemos que:
+* O tamanho do workload e da VM pouco influenciam de forma isolada e individual as métricas utilizadas. Com exceção do fator tamanho do workload que influencia na métrica tempo de execução.
+* O fator que apresenta maior influência para as métricas utilizadas é o da política de alocação. Com relação ao tempo de execução, a política spread se mostrou mais eficiente (menor tempo) que a política consolidation. Já em relação ao consumo de energia, a política spread apresentou maiores valores que a consolidation. E por último, a política consolidation apresentou maiores valores de temperatura nos hosts quando comparada a política spread.
 
-### Outra visualização
+### Outras visualizações
+
+Foi interessante notar na seção anterior como os fatores podem influenciar de forma isolada as métricas que utilizamos. Mas será que existem influência quando os fatores são combinados também? Esta pergunta já começou a ser respondida durante as interpretações para as visualizações de exploração dos dados. No entanto vamos reforçá-la usando novas visualizações.
 
 ```{r}
 medicao_summ %>% 
@@ -258,6 +280,10 @@ medicao_summ %>%
   facet_grid(. ~ workload_size) +
   labs(x = "Número da repetição", y = "Tempo de execução", color = "Política de alocação", size = "Tamanho da VM", title = "Tempo de execução por tamanho do workload")
 ```
+
+Nesta visualização temos ordenadas todas as observações medidas para as 30 repetições do experimento realizadas. Esta visualização contém 240 pontos que correspondem aos 8 tratamentos replicados 30 vezes. O número 8 vem do design do experimento que é fatorial completo com 3 fatores de dois níveis cada. O tamanho dos pontos varia conforme os níveis do fator tamanho da VM e a cor conforme a política de alocação. Ainda é possível observar que os gráficos estaão dividos em duas facetas, uma para o tamanho de workload large e outra para o tamanho small.
+
+Com relação ao tempo de execução podemos novamente afirmar, olhando a distribuição dos pontos que a política consolidação (em goiaba) apresenta maiores valores do que a spread (em azul-esverdeado). Quando olhamos para o tamanho  da vm, observamos que quando o workload é small e a política de alocação é spread, há uma diferença entre os valores, de forma que o tamanho da VM large apresenta maiores tempos de execução que o tamanho small.
 
 
 ```{r}
@@ -269,6 +295,7 @@ medicao_summ %>%
   labs(x = "Número da repetição", y = "Temperatura", color = "Política de alocação", size = "Tamanho da VM", title = "Temperatura do Host por tamanho do workload")
 ```
 
+Por esta visualização é possível observar a diferença de temperatura quando variamos o nível do fator política de alocação. Consolidation apresenta valores maiores que spread.
 
 ```{r}
 medicao_summ %>% 
@@ -279,13 +306,4 @@ medicao_summ %>%
   labs(x = "Número da repetição", y = "Consumo de energia", color = "Política de alocação", size = "Tamanho da VM", title = "Consumo de energia do host por tamanho do workload")
 ```
 
-
-
-
-
-
-
-
-
-
-
+Por esta visualização é novamente notável a diferença de consumo de energia entre as políticas de alocação. Consolidation apresenta um menor consumo do que spread. Os demais fatores parecem influenciar pouco.
