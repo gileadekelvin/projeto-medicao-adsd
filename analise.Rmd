@@ -1,0 +1,34 @@
+---
+title: Projeto de Medição - ADSD
+author: Gileade, Rafael, Samantha
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+## Introdução
+
+### Objetivo
+O sistema real que utilizaremos para realizar o projeto de medição será uma Cloud [OpenStack](https://www.openstack.org/) que monitora duas máquinas físicas (hosts). Estas máquinas serão de uso exclusivo da equipe durante o experimento. 
+Nosso objetivo é testar diferentes políticas de alocação de máquinas virtuais nos hosts (Consolidação ou Espalhamento) e pontuar aspectos positivos e negativos de ambas estratégias. 
+As máquinas virtuais selecionadas para serem alocadas no sistema terão um workload IO-Bound sintético atrelada a elas.
+
+### Fatores
+
+* Política de alocação: Consolidação ou Espalhamento.
+* Tamanho do workload: Large ou Small.
+* Tamanho das máquinas virtuais: Large ou Small.
+
+### Métricas
+
+* Energia consumida pelas máquinas físicas.
+* Temperatura dos sensores das máquinas físicas.
+* Tempo de execução dos workloads.
+
+O experimento foi realizado adotando o design fatorial completo. Como existem 3 fatores com 2 níveis cada um, teremos 2^3 (8) tratamentos em cada replicação. Adotamos o número de 30 replicações a fim de obter maior precisão estatística.
+
+
+
+
+
