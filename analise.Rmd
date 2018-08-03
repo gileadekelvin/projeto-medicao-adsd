@@ -7,6 +7,10 @@ output:
     highlight: github
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(results='hide', message=FALSE, warning=FALSE)
+```
+
 ## Introdução
 
 ### Objetivo
@@ -27,6 +31,255 @@ As máquinas virtuais selecionadas para serem alocadas no sistema terão um work
 * Tempo de execução dos workloads.
 
 O experimento foi realizado adotando o design fatorial completo. Como existem 3 fatores com 2 níveis cada um, teremos 2^3 (8) tratamentos em cada replicação. Adotamos o número de 30 replicações a fim de obter maior precisão estatística.
+
+## Tratamento dos dados
+
+```{r}
+library(tidyverse)
+library(here)
+theme_set(theme_bw())
+options(scipen = 999)
+```
+
+```{r}
+## Leitura de todos os csvs referentes a medicao
+
+files <- list.files(path = here("data"), pattern = "*.csv")
+
+medicao_full <- files %>% 
+    map(function(x) {
+        read_csv(paste0("./data/", x))
+    }) %>% 
+  reduce(rbind)
+```
+
+Nos dados da medição, temos informações da temperatura da vm e da energia consumida a cada segundo. Agrupamos essas medições pelo número da repetição, política de alocação, tamanho do workload, tamanho da vm. Em seguida sumarizamos definindo o tempo de workload como a diferença entre o maior e o menor tempo, ou seja, o tempo gasto para o workload ser processado. Também definimos a mediana como medida de tendência central, por ser mais robusta e sofrer menos influência de valores extremos. Usamos a mediana para definir a medida central que representa a energia consumida (W) e a temperatura (celsius) para um determinado tratamento. 
+
+```{r}
+medicao_summ <- medicao_full %>% 
+  arrange(rep_id) %>% 
+  select(rep_id, placement_policy, workload_size, vm_size, time, host_power, host_temperature) %>% 
+  group_by(rep_id, placement_policy, workload_size, vm_size) %>% 
+  summarise(workload_time = max(time) - min(time),
+         host_power = median(host_power),
+         host_temperature = median(host_temperature)) %>% 
+  ungroup()
+```
+
+Portanto, cada observação deste dataframe corresponde a uma determinada repetição (rep_id) para um determinado tratamento, definido por uma política de alocação (placement_policy), tamanho do workload (workload_size) e tamanho da vm (vm_size), um tempo (medido em segundos), consumo de energia (mediana do consumo de energia durante o tempo de execução do workload),  temperatura do host (mediana da temperatura do host durante o tempo de execução do workload).
+
+## Análise sobre os dados
+
+Inicialmente vamos entender o comportamento dos dados buscando relacionar a variação dos fatores com cada métrica calculada. Para atender este objetivo a visualização a seguir mostra por política de alocação (cada quadro), tamanho do workload (eixo x) e tamanho da VM (cor) qual o tempo de execução do workload. É possível visualizar as observações para cada tratamento e repetição, e também um boxblot para sumarização destes grupos.
+
+```{r}
+medicao_summ %>%
+  ggplot(aes(x = workload_size, y = workload_time, color = vm_size)) +
+  geom_boxplot(outlier.shape = "") +
+  geom_jitter(alpha = .4) +
+  facet_grid(. ~ placement_policy) +
+  labs(x = "Tamanho do workload", y = "Tempo de execução (s)", color = "Tamanho da VM")
+```
+
+TODO: {Inserir análise sobre a visualização completa}
+
+De forma análoga, podemos visualizar o comportamento dos dados, durante a variação dos fatores, focando na métrica de temperatura dos hosts (mediana da temperatura considerando o intervalo de tempo de execução do workload).
+
+```{r}
+medicao_summ %>%
+  ggplot(aes(x = workload_size, y = host_temperature, color = vm_size)) +
+  geom_boxplot(outlier.shape = "") +
+  geom_jitter(alpha = .4) +
+  facet_grid(. ~ placement_policy) +
+  labs(x = "Tamanho do workload", y = "Temperatura (Celsius)", color = "Tamanho da VM")
+```
+
+TODO: {Inserir análise sobre a visualização completa}
+
+Por último, a visualização do comportamento com relação a métrica consumo de energia (mediana do consumo de energia considerando o intevalo de tempo de execução do workload para o determinado tratamento e repetição).
+
+```{r}
+medicao_summ %>%
+  ggplot(aes(x = workload_size, y = host_power, color = vm_size)) +
+  geom_boxplot(outlier.shape = "") +
+  geom_jitter(alpha = .4) +
+  facet_grid(. ~ placement_policy) +
+  labs(x = "Tamanho do workload", y = "Consumo de Energia (W)", color = "Tamanho da VM")
+```
+
+TODO: {Inserir análise sobre a visualização completa}
+
+### Intervalo de confiança
+
+O objetivo nesta seção é determinar o intervalo de confiança para cada métrica observada, quando comparamos cada nível dos 3 fatores. Por exemplo, qual o intevalo de confiança para o tempo de execução quando o nível para a política de alocação é Consolidação? E quando o nível é Espalhamento?
+
+#### Tempo de execução
+
+##### Política de alocação
+
+```{r}
+consolidation <- t.test((medicao_summ %>% filter(placement_policy == "consolidation"))$workload_time)$conf.int
+consolidation
+```
+
+```{r}
+espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$workload_time)$conf.int
+espalhamento
+```
+
+TODO : {Comparar intervalos}
+
+#### Tamanho da VM
+
+```{r}
+large <- t.test((medicao_summ %>% filter(vm_size == "large"))$workload_time)$conf.int
+large
+```
+```{r}
+small <- t.test((medicao_summ %>% filter(vm_size == "small"))$workload_time)$conf.int
+small
+```
+
+TODO : {Comparar intervalos}
+
+#### Tamanho do workload
+
+```{r}
+large <- t.test((medicao_summ %>% filter(workload_size == "large"))$workload_time)$conf.int
+large
+```
+
+```{r}
+small <- t.test((medicao_summ %>% filter(workload_size == "small"))$workload_time)$conf.int
+small
+```
+
+TODO : {Comparar intervalos}
+
+#### Temperatura dos hosts
+
+##### Política de alocação
+
+```{r}
+consolidation <- t.test((medicao_summ %>% filter(placement_policy == "consolidation"))$host_power)$conf.int
+consolidation
+```
+
+```{r}
+espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$host_power)$conf.int
+espalhamento
+```
+
+TODO : {Comparar intervalos}
+#### Tamanho da VM
+
+```{r}
+large <- t.test((medicao_summ %>% filter(vm_size == "large"))$host_power)$conf.int
+large
+```
+```{r}
+small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_power)$conf.int
+small
+```
+
+TODO : {Comparar intervalos}
+
+#### Tamanho do workload
+
+```{r}
+large <- t.test((medicao_summ %>% filter(workload_size == "large"))$host_power)$conf.int
+large
+```
+
+```{r}
+small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_power)$conf.int
+small
+```
+
+TODO : {Comparar intervalos}
+
+#### Consumo de energia
+
+##### Política de alocação
+
+```{r}
+consolidation <- t.test((medicao_summ %>% filter(placement_policy == "consolidation"))$host_temperature)$conf.int
+consolidation
+```
+
+```{r}
+espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$host_temperature)$conf.int
+espalhamento
+```
+
+TODO : {Comparar intervalos}
+#### Tamanho da VM
+
+```{r}
+large <- t.test((medicao_summ %>% filter(vm_size == "large"))$host_temperature)$conf.int
+large
+```
+```{r}
+small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_temperature)$conf.int
+small
+```
+
+TODO : {Comparar intervalos}
+
+#### Tamanho do workload
+
+```{r}
+large <- t.test((medicao_summ %>% filter(workload_size == "large"))$host_temperature)$conf.int
+large
+```
+
+```{r}
+small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_temperature)$conf.int
+small
+```
+
+TODO : {Comparar intervalos}
+
+
+## Conclusão
+
+TODO: {conclusão sobre a influência dos fatores nas métricas observadas. De que forma essa análise pode ajudar a tomar um decisão sobre o uso de máquinas adotando consolidação ou espalhamento}
+
+### Outra visualização
+
+```{r}
+medicao_summ %>% 
+  ggplot(aes(x = rep_id, y = workload_time, color = placement_policy, size = vm_size, shape = workload_size)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(0, 32, 2)) +
+  labs(x = "Número da repetição", y = "Tempo de execução", color = "Política de alocação", size = "Tamanho da VM", shape = "Tamanho do workload")
+```
+
+
+```{r}
+medicao_summ %>% 
+  ggplot(aes(x = rep_id, y = host_temperature, color = placement_policy, size = vm_size, shape = workload_size)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(0, 32, 2)) +
+  labs(x = "Número da repetição", y = "Temperatura", color = "Política de alocação", size = "Tamanho da VM", shape = "Tamanho do workload")
+```
+
+
+```{r}
+medicao_summ %>% 
+  ggplot(aes(x = rep_id, y = host_power, color = placement_policy, size = vm_size, shape = workload_size)) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(0, 32, 2)) +
+  labs(x = "Número da repetição", y = "Consumo de energia", color = "Política de alocação", size = "Tamanho da VM", shape = "Tamanho do workload")
+```
+
+
+
+
+
+
+
+
 
 
 
