@@ -48,7 +48,7 @@ files <- list.files(path = here("data"), pattern = "*.csv")
 
 medicao_full <- files %>% 
     map(function(x) {
-        read_csv(paste0("./data/", x))
+        read_csv(paste0(here("data/"), x))
     }) %>% 
   reduce(rbind)
 ```
@@ -64,6 +64,8 @@ medicao_summ <- medicao_full %>%
          host_power = median(host_power),
          host_temperature = median(host_temperature)) %>% 
   ungroup()
+
+medicao_summ$vm_size = ordered(medicao_summ$vm_size, levels = c("small", "large"))
 ```
 
 Portanto, cada observação deste dataframe corresponde a uma determinada repetição (rep_id) para um determinado tratamento, definido por uma política de alocação (placement_policy), tamanho do workload (workload_size) e tamanho da vm (vm_size), um tempo (medido em segundos), consumo de energia (mediana do consumo de energia durante o tempo de execução do workload),  temperatura do host (mediana da temperatura do host durante o tempo de execução do workload).
@@ -123,8 +125,8 @@ consolidation
 ```
 
 ```{r results='show'}
-# espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$workload_time)$conf.int
-# espalhamento
+espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "spread"))$workload_time)$conf.int
+espalhamento
 ```
 
 TODO : {Comparar intervalos}
@@ -136,8 +138,8 @@ large <- t.test((medicao_summ %>% filter(vm_size == "large"))$workload_time)$con
 large
 ```
 ```{r results='show'}
-# small <- t.test((medicao_summ %>% filter(vm_size == "small"))$workload_time)$conf.int
-# small
+small <- t.test((medicao_summ %>% filter(vm_size == "small"))$workload_time)$conf.int
+small
 ```
 
 TODO : {Comparar intervalos}
@@ -150,8 +152,8 @@ large
 ```
 
 ```{r results='show'}
-# small <- t.test((medicao_summ %>% filter(workload_size == "small"))$workload_time)$conf.int
-# small
+small <- t.test((medicao_summ %>% filter(workload_size == "small"))$workload_time)$conf.int
+small
 ```
 
 TODO : {Comparar intervalos}
@@ -166,8 +168,8 @@ consolidation
 ```
 
 ```{r results='show'}
-# espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$host_power)$conf.int
-# espalhamento
+espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "spread"))$host_power)$conf.int
+espalhamento
 ```
 
 TODO : {Comparar intervalos}
@@ -179,8 +181,8 @@ large
 ```
 
 ```{r results='show'}
-# small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_power)$conf.int
-# small
+small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_power)$conf.int
+small
 ```
 
 TODO : {Comparar intervalos}
@@ -193,8 +195,8 @@ large
 ```
 
 ```{r results='show'}
-# small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_power)$conf.int
-# small
+small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_power)$conf.int
+small
 ```
 
 TODO : {Comparar intervalos}
@@ -209,8 +211,8 @@ consolidation
 ```
 
 ```{r results='show'}
-# espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "espalhamento"))$host_temperature)$conf.int
-# espalhamento
+espalhamento <- t.test((medicao_summ %>% filter(placement_policy == "spread"))$host_temperature)$conf.int
+espalhamento
 ```
 
 TODO : {Comparar intervalos}
@@ -222,8 +224,8 @@ large
 ```
 
 ```{r results='show'}
-# small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_temperature)$conf.int
-# small
+small <- t.test((medicao_summ %>% filter(vm_size == "small"))$host_temperature)$conf.int
+small
 ```
 
 TODO : {Comparar intervalos}
@@ -236,8 +238,8 @@ large
 ```
 
 ```{r results='show'}
-# small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_temperature)$conf.int
-# small
+small <- t.test((medicao_summ %>% filter(workload_size == "small"))$host_temperature)$conf.int
+small
 ```
 
 TODO : {Comparar intervalos}
@@ -250,31 +252,32 @@ TODO: {conclusão sobre a influência dos fatores nas métricas observadas. De q
 
 ```{r}
 medicao_summ %>% 
-  ggplot(aes(x = rep_id, y = workload_time, color = placement_policy, size = vm_size, shape = workload_size)) +
-  geom_point() +
+  ggplot(aes(x = rep_id, y = workload_time, color = placement_policy, size = vm_size)) +
+  geom_point(alpha = 0.6) +
   scale_x_continuous(breaks = seq(0, 32, 2)) +
-  labs(x = "Número da repetição", y = "Tempo de execução", color = "Política de alocação", size = "Tamanho da VM", shape = "Tamanho do workload")
+  facet_grid(. ~ workload_size) +
+  labs(x = "Número da repetição", y = "Tempo de execução", color = "Política de alocação", size = "Tamanho da VM", title = "Tempo de execução por tamanho do workload")
 ```
 
 
 ```{r}
 medicao_summ %>% 
-  ggplot(aes(x = rep_id, y = host_temperature, color = placement_policy, size = vm_size, shape = workload_size)) +
-  geom_point() +
+  ggplot(aes(x = rep_id, y = host_temperature, color = placement_policy, size = vm_size)) +
+  geom_point(alpha = 0.6) +
+  facet_grid(. ~ workload_size) +
   scale_x_continuous(breaks = seq(0, 32, 2)) +
-  labs(x = "Número da repetição", y = "Temperatura", color = "Política de alocação", size = "Tamanho da VM", shape = "Tamanho do workload")
+  labs(x = "Número da repetição", y = "Temperatura", color = "Política de alocação", size = "Tamanho da VM", title = "Temperatura do Host por tamanho do workload")
 ```
 
 
 ```{r}
 medicao_summ %>% 
-  ggplot(aes(x = rep_id, y = host_power, color = placement_policy, size = vm_size, shape = workload_size)) +
-  geom_point() +
+  ggplot(aes(x = rep_id, y = host_power, color = placement_policy, size = vm_size)) +
+  geom_point(alpha = 0.6) +
+  facet_grid(. ~ workload_size) +
   scale_x_continuous(breaks = seq(0, 32, 2)) +
-  labs(x = "Número da repetição", y = "Consumo de energia", color = "Política de alocação", size = "Tamanho da VM", shape = "Tamanho do workload")
+  labs(x = "Número da repetição", y = "Consumo de energia", color = "Política de alocação", size = "Tamanho da VM", title = "Consumo de energia do host por tamanho do workload")
 ```
-
-
 
 
 
